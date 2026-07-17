@@ -163,7 +163,6 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
       if (localTimeRef.current <= 0) {
         clearInterval(timerRef.current);
         if (!submittedRef.current) {
-          submittedRef.current = true;
           handleSubmit(true);
         }
         return;
