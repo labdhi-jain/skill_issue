@@ -1,0 +1,11 @@
+/* App.css */
+
+.app {
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Ensure game screen gets full viewport */
+.app > * {
+  min-height: 100vh;
+}
