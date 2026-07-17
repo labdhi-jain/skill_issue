@@ -1,0 +1,179 @@
+/* ============================================================
+   Home.css
+   ============================================================ */
+
+.home-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Vignette */
+.home-screen::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.home-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+.home-tagline {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  opacity: 0.9;
+}
+
+.home-title-wrap {
+  margin-bottom: 8px;
+}
+
+.home-subtitle {
+  font-family: var(--font-ui);
+  font-size: 17px;
+  color: var(--text-muted);
+  max-width: 480px;
+  line-height: 1.6;
+  margin: 0 auto 48px;
+}
+
+.home-subtitle span {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.home-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.home-username-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.home-username-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: var(--transition);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.home-username-input::placeholder {
+  color: var(--text-dim);
+}
+
+.home-username-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 32, 121, 0.15);
+}
+
+.home-play-btn {
+  width: 100%;
+  max-width: 380px;
+  padding: 18px 32px;
+  font-size: 18px;
+}
+
+.home-secondary-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.home-stats-strip {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 40px;
+  animation: fadeIn 1s ease 0.5s both;
+}
+
+.home-stat {
+  text-align: center;
+}
+
+.home-stat-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+}
+
+.home-stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.shame-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 90, 31, 0.15);
+  border: 1px solid rgba(255, 90, 31, 0.4);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--danger);
+  letter-spacing: 1px;
+  margin-top: 12px;
+  animation: pulse 2s infinite;
+}
+
+/* Floating particles background */
+.home-particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.05;
+  animation: float-particle linear infinite;
+}
+
+@keyframes float-particle {
+  from { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.08; }
+  90% { opacity: 0.08; }
+  to { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+}
