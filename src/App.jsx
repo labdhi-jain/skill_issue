@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameState } from './hooks/useGameState';
+import Auth from './pages/Auth';
 import Home from './pages/Home';
 import LevelSelect from './pages/LevelSelect';
 import Game from './pages/Game';
@@ -8,19 +9,56 @@ import Leaderboard from './pages/Leaderboard';
 import './index.css';
 import './App.css';
 
+const API = 'http://localhost:3001';
+
 export default function App() {
   const { state, actions } = useGameState();
-  const [screen, setScreen] = useState('home');
-  const [username, setUsername] = useState('');
+  const [screen, setScreen]   = useState('auth'); // starts at auth
+  const [user, setUser]       = useState(null);   // { id, email, username }
   const [bestScores, setBestScores] = useState({});
 
-  function handlePlayFromHome() {
-    setScreen('levelSelect');
+  // ── On mount: check for saved JWT ──────────────────────────────────────────
+  useEffect(() => {
+    const token = localStorage.getItem('skill_issue_token');
+    const saved = localStorage.getItem('skill_issue_user');
+    if (token && saved) {
+      try {
+        // Quick verify with server
+        fetch(`${API}/api/me`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (data) {
+              setUser(data);
+              setScreen('home');
+            } else {
+              // Token expired — clear and stay on auth
+              localStorage.removeItem('skill_issue_token');
+              localStorage.removeItem('skill_issue_user');
+            }
+          });
+      } catch {
+        setScreen('auth');
+      }
+    }
+  }, []);
+
+  // ── Auth complete ───────────────────────────────────────────────────────────
+  function handleAuth(userData) {
+    setUser(userData);
+    actions.setUsername(userData.username);
+    setScreen('home');
   }
 
+  function handleLogout() {
+    localStorage.removeItem('skill_issue_token');
+    localStorage.removeItem('skill_issue_user');
+    setUser(null);
+    setScreen('auth');
+  }
+
+  // ── Level flow ──────────────────────────────────────────────────────────────
   function handleSelectLevel(levelId) {
-    // Sync username into game state so Results can read it
-    actions.setUsername(username);
+    actions.setUsername(user?.username || '');
     actions.startLevel(levelId);
     setScreen('game');
   }
@@ -33,11 +71,6 @@ export default function App() {
     setScreen('leaderboard');
   }
 
-  function handleBack() {
-    setScreen(username ? 'levelSelect' : 'home');
-  }
-
-  // Called from Results when user clicks "ALL LEVELS" or "RETRY"
   function handlePlayAgain() {
     if (state.currentLevelId && state.roundScores.length > 0) {
       const avg = state.roundScores.reduce((s, r) => s + r.percentage, 0) / state.roundScores.length;
@@ -49,28 +82,39 @@ export default function App() {
     setScreen('levelSelect');
   }
 
-  // Called from Game when user clicks "SEE VERDICT →" after round 3
-  // actions.levelComplete() is already called inside Game's handleContinue
   const gameOnLevelComplete = () => {
-    // Update best scores
     if (state.currentLevelId && state.roundScores.length > 0) {
       const avg = state.roundScores.reduce((s, r) => s + r.percentage, 0) / state.roundScores.length;
       setBestScores(prev => ({
         ...prev,
         [state.currentLevelId]: Math.max(prev[state.currentLevelId] || 0, avg),
       }));
+
+      // Save to server leaderboard
+      const token = localStorage.getItem('skill_issue_token');
+      if (token) {
+        fetch(`${API}/api/leaderboard`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ level: state.currentLevelId, score: avg }),
+        }).catch(() => {});
+      }
     }
     setScreen('results');
   };
 
   return (
     <div className="app">
+      {screen === 'auth' && (
+        <Auth onAuth={handleAuth} />
+      )}
+
       {screen === 'home' && (
         <Home
-          onPlay={handlePlayFromHome}
+          onPlay={() => setScreen('levelSelect')}
           onLeaderboard={handleLeaderboard}
-          username={username}
-          onUsernameChange={setUsername}
+          username={user?.username || ''}
+          onLogout={handleLogout}
         />
       )}
 
@@ -96,7 +140,7 @@ export default function App() {
         <Results
           state={state}
           actions={actions}
-          username={username}
+          username={user?.username || ''}
           onPlayAgain={handlePlayAgain}
           onHome={() => setScreen('home')}
           onLeaderboard={handleLeaderboard}
@@ -106,8 +150,8 @@ export default function App() {
 
       {screen === 'leaderboard' && (
         <Leaderboard
-          onBack={handleBack}
-          username={username}
+          onBack={() => setScreen(user ? 'levelSelect' : 'home')}
+          username={user?.username || ''}
         />
       )}
     </div>
