@@ -1,15 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { LEVELS, LEVEL_ORDER } from '../engine/LevelConfig';
 import { isShamed } from '../engine/RageFXController';
 import './Leaderboard.css';
 
-function getLeaderboardData() {
-  try {
-    return JSON.parse(localStorage.getItem('skill_issue_leaderboard') || '[]');
-  } catch {
-    return [];
-  }
-}
+const API = 'http://localhost:3001';
 
 function getScoreClass(score) {
   if (score >= 80) return 'great';
@@ -21,8 +15,25 @@ const RANK_EMOJI = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
 export default function Leaderboard({ onBack, username }) {
   const [filter, setFilter] = useState('all');
-  const allData = getLeaderboardData();
+  const [allData, setAllData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const shamed = isShamed();
+
+  useEffect(() => {
+    fetch(`${API}/api/leaderboard`)
+      .then(r => r.json())
+      .then(data => {
+        // Normalise: server returns { username, level, best_score }
+        setAllData(data.map(d => ({ username: d.username, level: d.level, score: d.best_score })));
+      })
+      .catch(() => {
+        // Fallback to localStorage if server is down
+        try {
+          setAllData(JSON.parse(localStorage.getItem('skill_issue_leaderboard') || '[]'));
+        } catch { setAllData([]); }
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const filtered = useMemo(() => {
     const base = filter === 'all' ? allData : allData.filter(e => e.level === filter);
@@ -68,7 +79,12 @@ export default function Leaderboard({ onBack, username }) {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="leaderboard-empty">
+          <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
+          loading scores...
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="leaderboard-empty">
           <div style={{ fontSize: 32, marginBottom: 12 }}>💀</div>
           no scores yet.<br />be the first to suffer.
