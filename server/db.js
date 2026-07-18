@@ -14,7 +14,7 @@ db.exec(`
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     email         TEXT UNIQUE NOT NULL,
     username      TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT NOT NULL DEFAULT '',
     created_at    INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
   );
 
@@ -34,6 +34,16 @@ db.exec(`
     timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
   );
 `);
+
+// ── Migration: add password_hash if upgrading from old schema ─────────────────
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN password_hash TEXT NOT NULL DEFAULT ''`);
+} catch { /* column already exists, fine */ }
+
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN username TEXT NOT NULL DEFAULT ''`);
+} catch { /* column already exists, fine */ }
+
 
 // ── User queries ──────────────────────────────────────────────────────────────
 export const getUserByEmail    = db.prepare('SELECT * FROM users WHERE email = ?');
