@@ -11,7 +11,7 @@ import Leaderboard from './pages/Leaderboard';
 import './index.css';
 import './App.css';
 
-const API = 'http://localhost:3001';
+const LEVEL_UNLOCK_GATE = 50;
 
 export default function App() {
   const { state, actions } = useGameState();
@@ -48,7 +48,7 @@ export default function App() {
   // ── Load progress from server ───────────────────────────────────────────────
   const loadUserProgress = useCallback(async (token) => {
     try {
-      const res = await fetch(`${API}/api/scores/me`, {
+      const res = await fetch(`/api/scores/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
@@ -60,7 +60,7 @@ export default function App() {
 
       const unlocked = [LEVEL_ORDER[0]];
       for (let i = 0; i < LEVEL_ORDER.length - 1; i++) {
-        if ((bests[LEVEL_ORDER[i]] || 0) >= 50) {
+        if ((bests[LEVEL_ORDER[i]] || 0) >= LEVEL_UNLOCK_GATE) {
           unlocked.push(LEVEL_ORDER[i + 1]);
         } else {
           break;
@@ -78,7 +78,7 @@ export default function App() {
     const saved = localStorage.getItem('skill_issue_user');
     if (token && saved) {
       try {
-        fetch(`${API}/api/me`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch('/api/me', { headers: { Authorization: `Bearer ${token}` } })
           .then(r => r.ok ? r.json() : null)
           .then(data => {
             if (data) {
@@ -153,7 +153,7 @@ export default function App() {
       const token = localStorage.getItem('skill_issue_token');
       if (token) {
         try {
-          await fetch(`${API}/api/leaderboard`, {
+          await fetch('/api/leaderboard', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ level: state.currentLevelId, score: avg }),
