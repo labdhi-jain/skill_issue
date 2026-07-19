@@ -10,7 +10,8 @@
     "init-db": "node api/init-db.js",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node api/index.js"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
