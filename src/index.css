@@ -240,6 +240,20 @@ h1, h2, h3 {
   transform: none !important;
 }
 
+/* ── Button ripple ───────────────────────────────────────────────────────────── */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(0);
+  animation: ripple-expand 0.55s linear;
+  pointer-events: none;
+}
+
+@keyframes ripple-expand {
+  to { transform: scale(4); opacity: 0; }
+}
+
 /* ============================================================
    UTILITY
    ============================================================ */
