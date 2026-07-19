@@ -21,8 +21,8 @@ export default function Leaderboard({ onBack, username }) {
     fetch(`/api/leaderboard`)
       .then(r => r.json())
       .then(data => {
-        // Normalise: server returns { username, level, best_score }
-        setAllData(data.map(d => ({ username: d.username, level: d.level, score: d.best_score })));
+        // Normalise: server returns { username, level, best_score, best_time }
+        setAllData(data.map(d => ({ username: d.username, level: d.level, score: d.best_score, time: d.best_time })));
       })
       .catch(() => {
         // Fallback to localStorage if server is down
@@ -94,6 +94,7 @@ export default function Leaderboard({ onBack, username }) {
               <th>#</th>
               <th>player</th>
               <th>level</th>
+              <th style={{ textAlign: 'right' }}>time</th>
               <th style={{ textAlign: 'right' }}>accuracy</th>
             </tr>
           </thead>
@@ -122,6 +123,11 @@ export default function Leaderboard({ onBack, username }) {
                   <td>
                     <span className="lb-level">
                       {LEVELS[entry.level]?.emoji} {LEVELS[entry.level]?.label || entry.level}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="lb-time">
+                      {entry.time ? `${entry.time}s` : '--'}
                     </span>
                   </td>
                   <td>

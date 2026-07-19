@@ -192,6 +192,7 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
     result.roast = roast;
     result.tier = tier;
     result.timeUp = timeUp;
+    result.timeTaken = level.timeLimit - localTimeRef.current;
 
     // FX
     if (result.percentage < 60) {

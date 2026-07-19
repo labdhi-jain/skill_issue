@@ -142,6 +142,7 @@ export default function App() {
   const gameOnLevelComplete = async () => {
     if (state.currentLevelId && state.roundScores.length > 0) {
       const avg = state.roundScores.reduce((s, r) => s + r.percentage, 0) / state.roundScores.length;
+      const totalTime = state.roundScores.reduce((s, r) => s + r.timeTaken, 0);
 
       // Update local bestScores
       setBestScores(prev => ({
@@ -156,7 +157,7 @@ export default function App() {
           await fetch('/api/leaderboard', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ level: state.currentLevelId, score: avg }),
+            body: JSON.stringify({ level: state.currentLevelId, score: avg, time: totalTime }),
           });
           // Re-fetch progress from server so unlock state is always server-truth
           await loadUserProgress(token);

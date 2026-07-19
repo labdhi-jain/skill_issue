@@ -30,6 +30,7 @@ export async function initDB() {
       user_id   INTEGER NOT NULL REFERENCES users(id),
       level     TEXT NOT NULL,
       score     REAL NOT NULL,
+      time      REAL NOT NULL DEFAULT 0,
       timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
     );
   `);
@@ -95,26 +96,42 @@ export async function deleteOldOtps(email, nowTime) {
 }
 
 // ── Score queries ─────────────────────────────────────────────────────────────
-export async function insertScore(userId, level, score) {
+export async function insertScore(userId, level, score, time) {
   await db.execute({
-    sql: 'INSERT INTO scores (user_id, level, score) VALUES (?, ?, ?)',
-    args: [userId, level, score]
+    sql: 'INSERT INTO scores (user_id, level, score, time) VALUES (?, ?, ?, ?)',
+    args: [userId, level, score, time]
   });
 }
 
 export async function getLeaderboard() {
   const rs = await db.execute(`
-    SELECT u.username, s.level, MAX(s.score) as best_score, COUNT(*) as attempts
+    SELECT u.username, s.level, s.score as best_score, s.time as best_time, COUNT(*) over(partition by u.id, s.level) as attempts
     FROM scores s JOIN users u ON s.user_id = u.id
-    GROUP BY u.id, s.level ORDER BY best_score DESC LIMIT 100
+    WHERE s.id = (
+        SELECT id FROM scores
+        WHERE user_id = u.id AND level = s.level
+        ORDER BY score DESC, time ASC
+        LIMIT 1
+    )
+    ORDER BY best_score DESC, best_time ASC LIMIT 100
   `);
   return rs.rows;
 }
 
 export async function getUserScores(userId) {
   const rs = await db.execute({
-    sql: 'SELECT level, MAX(score) as best_score, COUNT(*) as attempts FROM scores WHERE user_id = ? GROUP BY level ORDER BY best_score DESC',
-    args: [userId]
+    sql: `
+      SELECT level, score as best_score, time as best_time, COUNT(*) over(partition by level) as attempts 
+      FROM scores s
+      WHERE user_id = ? AND id = (
+          SELECT id FROM scores
+          WHERE user_id = ? AND level = s.level
+          ORDER BY score DESC, time ASC
+          LIMIT 1
+      )
+      ORDER BY best_score DESC, best_time ASC
+    `,
+    args: [userId, userId]
   });
   return rs.rows;
 }

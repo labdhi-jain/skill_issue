@@ -174,11 +174,11 @@ app.get('/api/me', authMiddleware, async (req, res) => {
 
 // ── POST /api/leaderboard ─────────────────────────────────────────────────────
 app.post('/api/leaderboard', authMiddleware, async (req, res) => {
-  const { level, score } = req.body;
+  const { level, score, time } = req.body;
   if (!level || typeof score !== 'number')
     return res.status(400).json({ error: 'Missing level or score.' });
 
-  await insertScore(req.userId, level, score);
+  await insertScore(req.userId, level, score, time || 0);
   res.json({ success: true });
 });
 
