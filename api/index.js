@@ -199,7 +199,7 @@ app.get('/api/scores/me', authMiddleware, async (req, res) => {
 app.use(express.static(path.join(process.cwd(), 'dist')));
 
 // Catch-all: If the user refreshes a page, send them back to the game
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
 });
 
