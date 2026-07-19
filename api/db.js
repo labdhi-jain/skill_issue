@@ -1,22 +1,31 @@
 // server/db.js — Turso / libSQL database setup
 import { createClient } from '@libsql/client';
 
-let db;
-try {
-  db = createClient({
-    url: process.env.TURSO_URL || 'file:skillissue.db',
-    authToken: process.env.TURSO_TOKEN,
-  });
-} catch (err) {
-  console.error("CRITICAL ERROR: Failed to initialize Turso client at boot. Check your TURSO_URL and TURSO_TOKEN.", err);
-  // Create a dummy db object so the app doesn't crash at top-level import
-  db = {
-    execute: () => { throw new Error("Database not connected. Check TURSO_URL and TURSO_TOKEN in Vercel Environment Variables.") },
-    executeMultiple: () => { throw new Error("Database not connected.") }
-  };
-}
+let realDb = null;
 
-export { db };
+export const db = {
+  execute: async (...args) => {
+    if (!process.env.TURSO_URL) {
+      throw new Error("Missing TURSO_URL! You must add TURSO_URL to Vercel Environment Variables and hit Redeploy.");
+    }
+    if (process.env.TURSO_URL.startsWith('file:')) {
+      throw new Error("Invalid TURSO_URL! You pasted the local 'file:/tmp...' link. You must paste your real Turso 'libsql://...' link.");
+    }
+    if (!realDb) {
+      realDb = createClient({ url: process.env.TURSO_URL, authToken: process.env.TURSO_TOKEN });
+    }
+    return realDb.execute(...args);
+  },
+  executeMultiple: async (...args) => {
+    if (!process.env.TURSO_URL || process.env.TURSO_URL.startsWith('file:')) {
+      throw new Error("Invalid or missing TURSO_URL in Vercel Environment Variables!");
+    }
+    if (!realDb) {
+      realDb = createClient({ url: process.env.TURSO_URL, authToken: process.env.TURSO_TOKEN });
+    }
+    return realDb.executeMultiple(...args);
+  }
+};
 
 // ── Schema Initialization ─────────────────────────────────────────────────────
 export async function initDB() {
