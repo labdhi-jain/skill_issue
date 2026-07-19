@@ -218,5 +218,11 @@ if (!process.env.VERCEL) {
   });
 }
 
+// Global Error Handler to always return JSON (never HTML)
+app.use((err, req, res, next) => {
+  console.error("Global API Error:", err);
+  res.status(500).json({ error: err.message || 'Internal Server Error' });
+});
+
 // Export for Vercel
 export default app;

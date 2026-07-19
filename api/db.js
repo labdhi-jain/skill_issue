@@ -1,10 +1,22 @@
 // server/db.js — Turso / libSQL database setup
 import { createClient } from '@libsql/client';
 
-export const db = createClient({
-  url: process.env.TURSO_URL || 'file:skillissue.db',
-  authToken: process.env.TURSO_TOKEN,
-});
+let db;
+try {
+  db = createClient({
+    url: process.env.TURSO_URL || 'file:skillissue.db',
+    authToken: process.env.TURSO_TOKEN,
+  });
+} catch (err) {
+  console.error("CRITICAL ERROR: Failed to initialize Turso client at boot. Check your TURSO_URL and TURSO_TOKEN.", err);
+  // Create a dummy db object so the app doesn't crash at top-level import
+  db = {
+    execute: () => { throw new Error("Database not connected. Check TURSO_URL and TURSO_TOKEN in Vercel Environment Variables.") },
+    executeMultiple: () => { throw new Error("Database not connected.") }
+  };
+}
+
+export { db };
 
 // ── Schema Initialization ─────────────────────────────────────────────────────
 export async function initDB() {
