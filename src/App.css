@@ -9,3 +9,19 @@
 .app > * {
   min-height: 100vh;
 }
+
+/* ── Screen transitions ──────────────────────────────────────────────────── */
+.screen-enter {
+  animation: screenSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes screenSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
