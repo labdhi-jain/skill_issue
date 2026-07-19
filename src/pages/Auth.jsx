@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import './Auth.css';
 
-const API = 'http://localhost:3001';
-
 // ─── Sign In ──────────────────────────────────────────────────────────────────
 function SignIn({ onAuth }) {
   const [identifier, setIdentifier] = useState('');
@@ -18,7 +16,7 @@ function SignIn({ onAuth }) {
       return setError('Please fill in both fields.');
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/api/auth/login`, {
+      const res  = await fetch(`/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: identifier.trim(), password }),
@@ -118,7 +116,7 @@ function SignUp({ onAuth }) {
     if (!email.trim()) return setError('Please enter your email.');
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/api/auth/send-otp`, {
+      const res  = await fetch(`/api/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim() }),
@@ -165,7 +163,7 @@ function SignUp({ onAuth }) {
     setError('');
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/api/auth/verify-otp`, {
+      const res  = await fetch(`/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), code }),
@@ -193,7 +191,7 @@ function SignUp({ onAuth }) {
       return setError('Password must be at least 6 characters.');
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/api/auth/register`, {
+      const res  = await fetch(`/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ verifiedToken, username: username.trim(), password }),
