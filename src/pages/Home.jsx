@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { isShamed, getShameCount } from '../engine/RageFXController';
 import './Home.css';
 
@@ -11,27 +11,66 @@ const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
   color: i % 3 === 0 ? '#FF2079' : i % 3 === 1 ? '#D4FF3D' : '#FF5A1F',
 }));
 
+const TAGLINES = [
+  "the text runs the second you focus on it. read it anyway. type it anyway. cry later.",
+  "your fingers are too slow. your brain is too slow. honestly? just give up.",
+  "every round is a personal attack. we designed it that way. enjoy.",
+  "this game does not care about your feelings. at all. zero.",
+  "skill issue, but make it a lifestyle. welcome home.",
+  "other typing games let you win. we are not other typing games.",
+  "if you rage-quit, the game wins. if you don't, you still lose.",
+  "the words are tiny because your patience is even smaller.",
+];
+
+// Neon cursor trail dot
+function CursorTrail() {
+  const dotsRef = useRef([]);
+  const mouseRef = useRef({ x: -999, y: -999 });
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    function onMove(e) {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+      const dot = document.createElement('div');
+      dot.className = 'cursor-trail-dot';
+      dot.style.left = `${e.clientX}px`;
+      dot.style.top = `${e.clientY}px`;
+      container.appendChild(dot);
+      setTimeout(() => dot.remove(), 600);
+    }
+
+    window.addEventListener('mousemove', onMove);
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
+
+  return <div ref={containerRef} className="cursor-trail-container" />;
+}
+
 export default function Home({ onPlay, onLeaderboard, username, onLogout }) {
   const [shamed] = useState(isShamed);
   const [shameCount] = useState(getShameCount);
   const [typerIdx, setTyperIdx] = useState(0);
   const [typed, setTyped] = useState('');
+  const [tagline] = useState(() => TAGLINES[Math.floor(Math.random() * TAGLINES.length)]);
 
-  const subtitleWords = "the text runs the second you focus on it. read it anyway. type it anyway. cry later.";
-
-  // Typewriter effect for subtitle
+  // Typewriter effect for tagline
   useEffect(() => {
-    if (typerIdx < subtitleWords.length) {
+    if (typerIdx < tagline.length) {
       const t = setTimeout(() => {
-        setTyped(subtitleWords.slice(0, typerIdx + 1));
+        setTyped(tagline.slice(0, typerIdx + 1));
         setTyperIdx(i => i + 1);
-      }, 30 + Math.random() * 20);
+      }, 28 + Math.random() * 18);
       return () => clearTimeout(t);
     }
-  }, [typerIdx]);
+  }, [typerIdx, tagline]);
 
   return (
     <div className="home-screen">
+      <CursorTrail />
+
       {/* Floating particles */}
       <div className="home-particles">
         {PARTICLES.map(p => (
@@ -77,7 +116,7 @@ export default function Home({ onPlay, onLeaderboard, username, onLogout }) {
             background: 'var(--primary)',
             marginLeft: 2,
             verticalAlign: 'middle',
-            animation: typerIdx >= subtitleWords.length ? 'blink 1s infinite' : 'none',
+            animation: typerIdx >= tagline.length ? 'blink 1s infinite' : 'none',
           }} />
         </p>
 
@@ -89,7 +128,7 @@ export default function Home({ onPlay, onLeaderboard, username, onLogout }) {
 
           <button
             id="play-btn"
-            className="btn btn-primary home-play-btn"
+            className="btn btn-primary home-play-btn home-play-pulse"
             onClick={onPlay}
           >
             START SUFFERING →
@@ -155,7 +194,7 @@ export default function Home({ onPlay, onLeaderboard, username, onLogout }) {
           style={{ marginTop: 24, width: '100%' }}
           onClick={() => document.getElementById('how-to-modal')?.close()}
         >
-          GOT IT (I don't)
+          GOT IT (I didn't)
         </button>
       </dialog>
     </div>
