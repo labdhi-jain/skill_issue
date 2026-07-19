@@ -225,4 +225,6 @@ app.use((err, req, res, next) => {
 });
 
 // Export for Vercel
-export default app;
+export default function handler(req, res) {
+  return app(req, res);
+}
