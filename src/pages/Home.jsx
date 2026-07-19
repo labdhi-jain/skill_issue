@@ -11,8 +11,7 @@ const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
   color: i % 3 === 0 ? '#FF2079' : i % 3 === 1 ? '#D4FF3D' : '#FF5A1F',
 }));
 
-export default function Home({ onPlay, onLeaderboard, username, onUsernameChange }) {
-  const [inputVal, setInputVal] = useState(username || '');
+export default function Home({ onPlay, onLeaderboard, username, onLogout }) {
   const [shamed] = useState(isShamed);
   const [shameCount] = useState(getShameCount);
   const [typerIdx, setTyperIdx] = useState(0);
@@ -30,16 +29,6 @@ export default function Home({ onPlay, onLeaderboard, username, onUsernameChange
       return () => clearTimeout(t);
     }
   }, [typerIdx]);
-
-  function handlePlay() {
-    if (!inputVal.trim()) return;
-    onUsernameChange(inputVal.trim());
-    onPlay();
-  }
-
-  function handleKey(e) {
-    if (e.key === 'Enter') handlePlay();
-  }
 
   return (
     <div className="home-screen">
@@ -92,28 +81,16 @@ export default function Home({ onPlay, onLeaderboard, username, onUsernameChange
           }} />
         </p>
 
-        {/* Username + Play */}
+        {/* Actions */}
         <div className="home-actions">
-          <div className="home-username-form">
-            <input
-              id="username-input"
-              className="home-username-input"
-              type="text"
-              placeholder="enter your username"
-              value={inputVal}
-              onChange={e => setInputVal(e.target.value)}
-              onKeyDown={handleKey}
-              maxLength={20}
-              autoComplete="off"
-              spellCheck={false}
-            />
-          </div>
+          {username && (
+            <span className="home-username-display">👾 {username}</span>
+          )}
 
           <button
             id="play-btn"
             className="btn btn-primary home-play-btn"
-            onClick={handlePlay}
-            disabled={!inputVal.trim()}
+            onClick={onPlay}
           >
             START SUFFERING →
           </button>
@@ -133,6 +110,11 @@ export default function Home({ onPlay, onLeaderboard, username, onUsernameChange
             >
               ? how to play
             </button>
+            {onLogout && (
+              <button id="logout-btn" className="btn btn-ghost" onClick={onLogout}>
+                🚪 log out
+              </button>
+            )}
           </div>
 
           {shamed && (
