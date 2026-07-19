@@ -25,10 +25,22 @@
 
 .level-select-title {
   font-family: var(--font-display);
-  font-size: 40px;
+  font-size: clamp(28px, 6vw, 52px);
   color: var(--text);
   margin-bottom: 8px;
   letter-spacing: 2px;
+  animation: doom-breathe 3s ease-in-out infinite;
+}
+
+@keyframes doom-breathe {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(255, 32, 121, 0.2), 0 0 20px rgba(255, 32, 121, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(255, 90, 31, 0.6), 0 0 40px rgba(255, 32, 121, 0.4);
+    transform: scale(1.02);
+  }
 }
 
 .level-select-sub {
@@ -79,16 +91,40 @@
 .level-card:hover:not(.locked) {
   border-color: var(--level-color, var(--primary));
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  box-shadow:
+    0 12px 40px rgba(0,0,0,0.3),
+    0 0 0 1px var(--level-color, var(--primary)),
+    0 0 24px color-mix(in srgb, var(--level-color, var(--primary)) 40%, transparent);
+}
+
+.level-card.unlocked {
+  cursor: pointer;
 }
 
 .level-card.locked {
-  opacity: 0.4;
-  cursor: not-allowed;
+  opacity: 0.45;
+  cursor: pointer; /* still clickable for sass */
 }
 
 .level-card.locked:hover {
   transform: none;
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+/* Shake on locked click */
+.level-card-shake {
+  animation: level-card-shake 0.45s cubic-bezier(0.36,0.07,0.19,0.97) both !important;
+}
+
+@keyframes level-card-shake {
+  0%,100% { transform: translateX(0); }
+  15%  { transform: translateX(-8px) rotate(-1deg); }
+  30%  { transform: translateX(8px)  rotate(1deg); }
+  45%  { transform: translateX(-6px) rotate(-0.5deg); }
+  60%  { transform: translateX(6px)  rotate(0.5deg); }
+  75%  { transform: translateX(-3px); }
+  90%  { transform: translateX(3px); }
 }
 
 .level-card-top {
@@ -130,8 +166,24 @@
   font-size: 13px;
   color: var(--text-muted);
   font-style: italic;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   line-height: 1.4;
+}
+
+/* Score progress bar */
+.level-score-bar-wrap {
+  height: 4px;
+  background: var(--bg2);
+  border-radius: 4px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.level-score-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  min-width: 2px;
 }
 
 .level-stats {
