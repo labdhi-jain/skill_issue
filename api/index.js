@@ -1,6 +1,7 @@
 // server/index.js — Express backend for SKILL ISSUE (Vercel Ready)
 import 'dotenv/config';
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -194,10 +195,17 @@ app.get('/api/scores/me', authMiddleware, async (req, res) => {
   res.json(scores);
 });
 
+// Serve the compiled Vite frontend (the 'dist' folder)
+app.use(express.static(path.join(process.cwd(), 'dist')));
+
+// Catch-all: If the user refreshes a page, send them back to the game
+app.get('*', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+});
+
 // ── STARTUP ───────────────────────────────────────────────────────────────────
 // We only call app.listen if we are NOT running in a Vercel serverless environment
-// Vercel serverless environments don't like app.listen()
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+if (!process.env.VERCEL) {
   initDB().then(() => {
     app.listen(PORT, () => {
       console.log(`\n🎮 SKILL ISSUE server running on http://localhost:${PORT}\n`);
