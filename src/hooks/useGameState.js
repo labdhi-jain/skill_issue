@@ -93,24 +93,19 @@ function gameReducer(state, action) {
       return { ...state, teleportCount: state.teleportCount + 1 };
 
     case 'LEVEL_COMPLETE': {
-      // Unlock next level
-      const currentIdx = LEVEL_ORDER.indexOf(state.currentLevelId);
-      const nextLevelId = LEVEL_ORDER[currentIdx + 1];
-      const newUnlocked = nextLevelId && !state.unlockedLevels.includes(nextLevelId)
-        ? [...state.unlockedLevels, nextLevelId]
-        : state.unlockedLevels;
-
       const levelAvg = state.roundScores.reduce((sum, r) => sum + r.percentage, 0) / state.roundScores.length;
       const newTotal = state.totalScore + levelAvg;
-
+      // NOTE: unlocking is handled by App.jsx after checking the 50% gate
       return {
         ...state,
         screen: 'result',
         phase: 'idle',
-        unlockedLevels: newUnlocked,
         totalScore: newTotal,
       };
     }
+
+    case 'SET_UNLOCKED_LEVELS':
+      return { ...state, unlockedLevels: action.levels };
 
     case 'RESET_GAME':
       return { ...initialState, username: state.username, unlockedLevels: state.unlockedLevels };
@@ -136,6 +131,7 @@ export function useGameState() {
     incrementTeleport: useCallback(() => dispatch({ type: 'INCREMENT_TELEPORT' }), []),
     levelComplete: useCallback(() => dispatch({ type: 'LEVEL_COMPLETE' }), []),
     resetGame: useCallback(() => dispatch({ type: 'RESET_GAME' }), []),
+    setUnlockedLevels: useCallback((levels) => dispatch({ type: 'SET_UNLOCKED_LEVELS', levels }), []),
   };
 
   return { state, actions };

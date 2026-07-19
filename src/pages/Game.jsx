@@ -2,11 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { LEVELS } from '../engine/LevelConfig';
 import { getNextPosition, getGhostPositions, getMicroTeleportOffset } from '../engine/TextPlacer';
 import { scoreAttempt, getRoastTier, getRandomRoast } from '../engine/ScoringEngine';
-import {
-  playBonk, playSmugJingle, playTeleport, playTimerWarning,
-  playStreakBreak, flashScreen, getRandomMidGameTaunt,
-} from '../engine/RageFXController';
+import { playBonk, playSmugJingle, playTeleport, playTimerWarning, playStreakBreak, flashScreen, getRandomMidGameTaunt } from '../engine/RageFXController';
 import { useZoomDetect } from '../hooks/useZoomDetect';
+import Mascot from '../components/Mascot';
 import './Game.css';
 
 const ROUNDS_PER_LEVEL = 3;
@@ -377,6 +375,14 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
           </div>
         </div>
       )}
+
+      <Mascot 
+        typed={typed} 
+        targetText={targetText} 
+        timeLeft={timeLeft} 
+        phase={phase} 
+        hasTypo={typed.length > 0 && !targetText.startsWith(typed)} 
+      />
 
       {/* Typing area */}
       <div className="typing-area">

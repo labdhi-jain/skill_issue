@@ -356,8 +356,8 @@ function SignUp({ onAuth }) {
 }
 
 // ─── Main Auth screen ─────────────────────────────────────────────────────────
-export default function Auth({ onAuth }) {
-  const [tab, setTab] = useState('signin'); // 'signin' | 'signup'
+export default function Auth({ onAuth, onBack, initialTab = 'signin' }) {
+  const [tab, setTab] = useState(initialTab); // 'signin' | 'signup'
 
   return (
     <div className="auth-screen">
@@ -365,6 +365,12 @@ export default function Auth({ onAuth }) {
       <div className="auth-vignette" />
 
       <div className="auth-card">
+        {onBack && (
+          <button className="btn btn-ghost" style={{ position: 'absolute', top: 16, left: 16 }} onClick={onBack}>
+            ← back
+          </button>
+        )}
+        
         {/* Logo */}
         <div className="auth-logo">
           <div className="auth-logo-title">SKILL ISSUE</div>
