@@ -55,9 +55,10 @@ export async function sendOtpEmail(toEmail, code) {
   `;
 
   await transporter.sendMail({
-    from: `"SKILL ISSUE 🎮" <${process.env.SMTP_USER}>`,
+    from: `"Skill Issue Game" <${process.env.SMTP_USER}>`,
     to: toEmail,
-    subject: `${code} is your SKILL ISSUE code`,
+    subject: `Your Verification Code: ${code}`,
+    text: `Your verification code is ${code}. It expires in 10 minutes. If you didn't request this, ignore this email.`,
     html,
   });
 }
