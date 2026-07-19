@@ -3,8 +3,6 @@ import { LEVELS, LEVEL_ORDER } from '../engine/LevelConfig';
 import { isShamed } from '../engine/RageFXController';
 import './Leaderboard.css';
 
-const API = 'http://localhost:3001';
-
 function getScoreClass(score) {
   if (score >= 80) return 'great';
   if (score >= 50) return 'ok';
@@ -20,7 +18,7 @@ export default function Leaderboard({ onBack, username }) {
   const shamed = isShamed();
 
   useEffect(() => {
-    fetch(`${API}/api/leaderboard`)
+    fetch(`/api/leaderboard`)
       .then(r => r.json())
       .then(data => {
         // Normalise: server returns { username, level, best_score }
