@@ -210,8 +210,11 @@ if (!process.env.VERCEL) {
     app.listen(PORT, () => {
       console.log(`\n🎮 SKILL ISSUE server running on http://localhost:${PORT}\n`);
     });
-  }).catch(err => {
-    console.error("Failed to init DB:", err);
+  }).catch((err) => {
+    console.warn("⚠️ Database initialization failed (missing env vars?), but starting server anyway:", err.message);
+    app.listen(PORT, () => {
+      console.log(`\n🎮 SKILL ISSUE server running on http://localhost:${PORT}\n`);
+    });
   });
 }
 
