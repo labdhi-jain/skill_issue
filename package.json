@@ -7,13 +7,14 @@
     "dev": "concurrently \"vite\" \"node server/index.js\"",
     "server": "node server/index.js",
     "server:dev": "nodemon server/index.js",
+    "init-db": "node server/init-db.js",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.4",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.11.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
