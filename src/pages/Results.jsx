@@ -30,6 +30,7 @@ export default function Results({ state, actions, username, onPlayAgain, onHome,
   const [scoreColor, setScoreColor] = useState('var(--text)');
   const [rgbGlitch, setRgbGlitch] = useState(false);
   const [confetti, setConfetti] = useState([]);
+  const [displayScore, setDisplayScore] = useState(0); // animated counter
 
   const allRoasts = useRef(getAllRoasts());
   const spinRef = useRef(null);
@@ -77,15 +78,28 @@ export default function Results({ state, actions, username, onPlayAgain, onHome,
       const finalColor = avgScore >= 80 ? 'var(--accent)' : avgScore >= 50 ? 'var(--danger)' : 'var(--primary)';
       setScoreColor(finalColor);
 
-      // Confetti for near-perfect
-      if (avgScore >= 88) {
-        const pieces = Array.from({ length: 40 }, (_, i) => ({
+      // Animate score counter
+      const start = Date.now();
+      const duration = 1200;
+      function tick() {
+        const elapsed = Date.now() - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setDisplayScore(avgScore * eased);
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+
+      // Confetti for ≥80%
+      if (avgScore >= 80) {
+        const pieces = Array.from({ length: 50 }, (_, i) => ({
           id: i,
           left: Math.random() * 100,
-          color: ['#FF2079', '#D4FF3D', '#FF5A1F', '#F0EBF8'][i % 4],
+          color: ['#FF2079', '#D4FF3D', '#FF5A1F', '#F0EBF8', '#7B61FF'][i % 5],
           duration: 2 + Math.random() * 2,
-          delay: Math.random() * 1,
+          delay: Math.random() * 1.2,
           rotation: Math.random() * 360,
+          size: 6 + Math.random() * 8,
         }));
         setConfetti(pieces);
       }
@@ -137,7 +151,9 @@ export default function Results({ state, actions, username, onPlayAgain, onHome,
               style={{
                 left: `${p.left}%`,
                 background: p.color,
-                borderRadius: p.id % 2 === 0 ? '50%' : '2px',
+                width: p.size || 8,
+                height: p.size || 8,
+                borderRadius: p.id % 3 === 0 ? '50%' : p.id % 3 === 1 ? '2px' : '0%',
                 animationDuration: `${p.duration}s`,
                 animationDelay: `${p.delay}s`,
                 transform: `rotate(${p.rotation}deg)`,
@@ -158,9 +174,30 @@ export default function Results({ state, actions, username, onPlayAgain, onHome,
       {/* Slot machine */}
       <div className="slot-machine">
         <div className="slot-score" style={{ color: scoreColor }}>
-          {avgScore.toFixed(3)}%
+          {landed ? displayScore.toFixed(3) : '---'}%
         </div>
         <div className="slot-score-label">average accuracy</div>
+
+        {/* Rage / success meter */}
+        {landed && (
+          <div className="rage-meter-wrap">
+            <div
+              className="rage-meter-bar"
+              style={{
+                width: `${Math.min(avgScore, 100)}%`,
+                background: avgScore >= 80
+                  ? 'linear-gradient(90deg, var(--accent-dark), var(--accent))'
+                  : avgScore >= 50
+                    ? 'linear-gradient(90deg, #b84000, var(--danger))'
+                    : 'linear-gradient(90deg, #7a0020, var(--primary))',
+              }}
+            />
+            <div className="rage-meter-labels">
+              <span style={{ color: 'var(--primary)' }}>💀 PAIN</span>
+              <span style={{ color: 'var(--accent)' }}>GLORY 🏆</span>
+            </div>
+          </div>
+        )}
 
         <div className="slot-reel">
           <div className={`slot-reel-text ${spinning ? 'spinning' : ''} ${landed ? 'landed' : ''} ${rgbGlitch ? 'slot-rgb-glitch' : ''}`}>
@@ -216,6 +253,25 @@ export default function Results({ state, actions, username, onPlayAgain, onHome,
           >
             {LEVELS[nextLevelId].emoji} NEXT: {LEVELS[nextLevelId].label} →
           </button>
+        )}
+
+        {/* Show gate message when next level exists but wasn't unlocked */}
+        {nextLevelId && !state.unlockedLevels.includes(nextLevelId) && landed && (
+          <div style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 12,
+            color: avgScore >= 50 ? 'var(--accent)' : 'var(--primary)',
+            background: avgScore >= 50 ? 'rgba(212,255,61,0.08)' : 'rgba(255,32,121,0.08)',
+            border: `1px solid ${avgScore >= 50 ? 'rgba(212,255,61,0.25)' : 'rgba(255,32,121,0.25)'}`,
+            borderRadius: 12,
+            padding: '10px 18px',
+            letterSpacing: 1,
+            marginTop: 4,
+          }}>
+            {avgScore >= 50
+              ? `✅ ${LEVELS[nextLevelId].label} unlocked! go to All Levels to play it.`
+              : `🔒 need 50%+ to unlock ${LEVELS[nextLevelId].label} — you got ${avgScore.toFixed(1)}%`}
+          </div>
         )}
 
         <button

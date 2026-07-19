@@ -65,7 +65,31 @@
   font-size: 11px;
   color: var(--text-muted);
   letter-spacing: 3px;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
+}
+
+/* ── Rage / success meter ─────────────────────────────────────────────── */
+.rage-meter-wrap {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.rage-meter-bar {
+  height: 8px;
+  border-radius: 8px;
+  width: 0%;
+  transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 12px currentColor;
+}
+
+.rage-meter-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .slot-reel {
