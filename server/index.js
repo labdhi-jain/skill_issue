@@ -1,11 +1,11 @@
-// server/index.js — Express backend for SKILL ISSUE
+// server/index.js — Express backend for SKILL ISSUE (Vercel Ready)
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import {
-  getUserByEmail, getUserByUsername, getUserById, createUser,
+  initDB, getUserByEmail, getUserByUsername, getUserById, createUser,
   insertOtp, getLatestOtp, markOtpUsed, deleteOldOtps,
   insertScore, getLeaderboard, getUserScores,
 } from './db.js';
@@ -15,6 +15,8 @@ const app        = express();
 const PORT       = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'change_me_in_production';
 
+// Vercel serverless functions handle CORS themselves via vercel.json usually, 
+// but we keep this for local dev and specific origins.
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 
@@ -45,7 +47,6 @@ function authMiddleware(req, res, next) {
 }
 
 // ── POST /api/auth/send-otp ───────────────────────────────────────────────────
-// Step 1 of sign-up: send OTP to verify the email is real
 app.post('/api/auth/send-otp', async (req, res) => {
   const { email } = req.body;
   if (!email || !isValidEmail(email))
@@ -54,14 +55,15 @@ app.post('/api/auth/send-otp', async (req, res) => {
   const lowerEmail = email.toLowerCase().trim();
 
   // Don't let an existing user re-register
-  if (getUserByEmail.get(lowerEmail))
+  const existing = await getUserByEmail(lowerEmail);
+  if (existing)
     return res.status(409).json({ error: 'This email is already registered. Please sign in.' });
 
   const code      = generateOtp();
   const expiresAt = Math.floor(Date.now() / 1000) + 600; // 10 min
 
-  deleteOldOtps.run(lowerEmail, Math.floor(Date.now() / 1000));
-  insertOtp.run(lowerEmail, code, expiresAt);
+  await deleteOldOtps(lowerEmail, Math.floor(Date.now() / 1000));
+  await insertOtp(lowerEmail, code, expiresAt);
 
   try {
     await sendOtpEmail(lowerEmail, code);
@@ -76,15 +78,15 @@ app.post('/api/auth/send-otp', async (req, res) => {
 });
 
 // ── POST /api/auth/verify-otp ─────────────────────────────────────────────────
-// Step 2 of sign-up: verify the OTP (returns a short-lived verified token)
-app.post('/api/auth/verify-otp', (req, res) => {
+app.post('/api/auth/verify-otp', async (req, res) => {
   const { email, code } = req.body;
   if (!email || !code)
     return res.status(400).json({ error: 'Email and code are required.' });
 
   const lowerEmail = email.toLowerCase().trim();
   const now        = Math.floor(Date.now() / 1000);
-  const otp        = getLatestOtp.get(lowerEmail);
+  
+  const otp = await getLatestOtp(lowerEmail);
 
   if (!otp)
     return res.status(400).json({ error: 'No code found. Please request a new one.' });
@@ -93,15 +95,13 @@ app.post('/api/auth/verify-otp', (req, res) => {
   if (otp.code !== String(code).trim())
     return res.status(400).json({ error: 'Wrong code. Try again.' });
 
-  markOtpUsed.run(otp.id);
+  await markOtpUsed(otp.id);
 
-  // Issue a short-lived "email verified" token (5 min) — used to finalise registration
   const verifiedToken = jwt.sign({ emailVerified: lowerEmail }, JWT_SECRET, { expiresIn: '5m' });
   res.json({ success: true, verifiedToken });
 });
 
 // ── POST /api/auth/register ───────────────────────────────────────────────────
-// Step 3 of sign-up: set username + password, create account
 app.post('/api/auth/register', async (req, res) => {
   const { verifiedToken, username, password } = req.body;
 
@@ -112,7 +112,6 @@ app.post('/api/auth/register', async (req, res) => {
   if (password.length < 6)
     return res.status(400).json({ error: 'Password must be at least 6 characters.' });
 
-  // Validate the verified token
   let emailVerified;
   try {
     emailVerified = jwt.verify(verifiedToken, JWT_SECRET).emailVerified;
@@ -120,14 +119,14 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'Email verification expired. Please start over.' });
   }
 
-  // Check username not taken
-  if (getUserByUsername.get(username.trim()))
+  const existingName = await getUserByUsername(username.trim());
+  if (existingName)
     return res.status(409).json({ error: 'Username already taken. Pick another.' });
 
   const passwordHash = await bcrypt.hash(password, 10);
   let user;
   try {
-    user = createUser.get(emailVerified, username.trim(), passwordHash);
+    user = await createUser(emailVerified, username.trim(), passwordHash);
   } catch {
     return res.status(409).json({ error: 'Email already registered.' });
   }
@@ -141,21 +140,22 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
-// Sign in with email (or username) + password
 app.post('/api/auth/login', async (req, res) => {
   const { identifier, password } = req.body;
   if (!identifier || !password)
-    return res.status(400).json({ error: 'Email/username and password are required.' });
+    return res.status(400).json({ error: 'Please provide email/username and password.' });
 
-  const id   = identifier.trim().toLowerCase();
-  const user = isValidEmail(id) ? getUserByEmail.get(id) : getUserByUsername.get(identifier.trim());
+  const lowerIdent = identifier.toLowerCase().trim();
+  
+  let user = await getUserByEmail(lowerIdent);
+  if (!user) user = await getUserByUsername(identifier.trim());
 
   if (!user)
-    return res.status(401).json({ error: 'No account found with that email or username.' });
+    return res.status(401).json({ error: 'Invalid credentials.' });
 
-  const match = await bcrypt.compare(password, user.password_hash);
-  if (!match)
-    return res.status(401).json({ error: 'Wrong password.' });
+  const isMatch = await bcrypt.compare(password, user.password_hash);
+  if (!isMatch)
+    return res.status(401).json({ error: 'Invalid credentials.' });
 
   const token = makeJwt(user.id);
   res.json({
@@ -166,34 +166,46 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // ── GET /api/me ───────────────────────────────────────────────────────────────
-app.get('/api/me', authMiddleware, (req, res) => {
-  const user = getUserById.get(req.userId);
+app.get('/api/me', authMiddleware, async (req, res) => {
+  const user = await getUserById(req.userId);
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.json({ id: user.id, email: user.email, username: user.username });
 });
 
-// ── GET /api/leaderboard ──────────────────────────────────────────────────────
-app.get('/api/leaderboard', (_req, res) => {
-  res.json(getLeaderboard.all());
-});
-
 // ── POST /api/leaderboard ─────────────────────────────────────────────────────
-app.post('/api/leaderboard', authMiddleware, (req, res) => {
+app.post('/api/leaderboard', authMiddleware, async (req, res) => {
   const { level, score } = req.body;
-  if (!level || score === undefined)
-    return res.status(400).json({ error: 'level and score required' });
-  insertScore.run(req.userId, level, score);
+  if (!level || typeof score !== 'number')
+    return res.status(400).json({ error: 'Missing level or score.' });
+
+  await insertScore(req.userId, level, score);
   res.json({ success: true });
 });
 
+// ── GET /api/leaderboard ──────────────────────────────────────────────────────
+app.get('/api/leaderboard', async (req, res) => {
+  const rows = await getLeaderboard();
+  res.json(rows);
+});
+
 // ── GET /api/scores/me ────────────────────────────────────────────────────────
-app.get('/api/scores/me', authMiddleware, (req, res) => {
-  res.json(getUserScores.all(req.userId));
+app.get('/api/scores/me', authMiddleware, async (req, res) => {
+  const scores = await getUserScores(req.userId);
+  res.json(scores);
 });
 
-// ── Health ────────────────────────────────────────────────────────────────────
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
+// ── STARTUP ───────────────────────────────────────────────────────────────────
+// We only call app.listen if we are NOT running in a Vercel serverless environment
+// Vercel serverless environments don't like app.listen()
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  initDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`\n🎮 SKILL ISSUE server running on http://localhost:${PORT}\n`);
+    });
+  }).catch(err => {
+    console.error("Failed to init DB:", err);
+  });
+}
 
-app.listen(PORT, () => {
-  console.log(`\n🎮 SKILL ISSUE server running on http://localhost:${PORT}\n`);
-});
+// Export for Vercel
+export default app;
