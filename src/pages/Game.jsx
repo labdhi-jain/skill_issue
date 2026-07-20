@@ -249,8 +249,14 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
         handleContinue();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    // Delay attaching to prevent catching the same Enter keydown that submitted the form
+    const timer = setTimeout(() => {
+      window.addEventListener('keydown', handleKeyDown);
+    }, 100);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [showResult, handleContinue]);
 
   // ── Keyboard submit ───────────────────────────────────────────────────────
