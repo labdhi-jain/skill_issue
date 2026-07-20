@@ -157,7 +157,7 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
       clearInterval(microTeleportRef.current);
       clearInterval(tauntTimerRef.current);
     };
-  }, [phase, round]); // eslint-disable-line
+  }, [phase, round, countdown]); // eslint-disable-line
 
   // ── Timer countdown ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -190,7 +190,7 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [phase, round]); // eslint-disable-line
+  }, [phase, round, countdown]); // eslint-disable-line
 
   // ── Submit attempt ────────────────────────────────────────────────────────
   const handleSubmit = useCallback((timeUp = false) => {
