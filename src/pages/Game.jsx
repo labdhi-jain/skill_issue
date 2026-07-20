@@ -243,16 +243,22 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
 
   useEffect(() => {
     if (!showResult) return;
+    
+    let isReady = false;
+    // Prevent accidental double-taps or key repeats from instantly skipping the result screen.
+    // Force the player to actually see the screen for at least 500ms before they can press Enter.
+    const timer = setTimeout(() => {
+      isReady = true;
+    }, 500);
+
     const handleKeyDown = (e) => {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && isReady && !e.repeat) {
         e.preventDefault();
         handleContinue();
       }
     };
-    // Delay attaching to prevent catching the same Enter keydown that submitted the form
-    const timer = setTimeout(() => {
-      window.addEventListener('keydown', handleKeyDown);
-    }, 100);
+    
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
       clearTimeout(timer);
       window.removeEventListener('keydown', handleKeyDown);
