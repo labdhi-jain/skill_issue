@@ -105,7 +105,7 @@ export const LEVELS = {
     teleportOnZoom: true,
     autoTeleportInterval: 800,
     microTeleport: true,
-    timeLimit: 6,
+    timeLimit: 7,
     wordCount: 20,
     rotation: 30,
     opacityFlicker: true,
