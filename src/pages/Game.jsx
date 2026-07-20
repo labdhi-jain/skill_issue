@@ -504,7 +504,6 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
               id="continue-btn"
               className="btn btn-primary round-continue-btn"
               onClick={handleContinue}
-              autoFocus
             >
               {round >= ROUNDS_PER_LEVEL ? 'SEE VERDICT →' : `NEXT ROUND (${round + 1}/${ROUNDS_PER_LEVEL}) →`}
             </button>
