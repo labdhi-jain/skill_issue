@@ -30,6 +30,22 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
   const [showResult, setShowResult] = useState(false);
   const [fakeProgress, setFakeProgress] = useState(0);
   const [streakBroken, setStreakBroken] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+
+  // ── Pre-round Countdown ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (phase === 'reading') {
+      if (countdown > 0) {
+        const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+        return () => clearTimeout(t);
+      } else if (countdown === 0) {
+        const t = setTimeout(() => setCountdown(null), 600); // Briefly show "GO!"
+        return () => clearTimeout(t);
+      }
+    } else {
+      setCountdown(3);
+    }
+  }, [phase, countdown]);
 
   const recentPositions = useRef([]);
   const timerRef = useRef(null);
@@ -96,7 +112,7 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
 
   // ── Round start ───────────────────────────────────────────────────────────
   useEffect(() => {
-    if (phase !== 'reading') return;
+    if (phase !== 'reading' || countdown !== null) return;
 
     setShrinkStep(0);
     setTyped('');
@@ -145,7 +161,7 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
 
   // ── Timer countdown ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (phase !== 'reading') {
+    if (phase !== 'reading' || countdown !== null) {
       clearInterval(timerRef.current);
       return;
     }
@@ -259,6 +275,15 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
 
   return (
     <div className="game-screen" id="game-screen">
+      {/* Pre-round Countdown Overlay */}
+      {phase === 'reading' && countdown !== null && (
+        <div className="countdown-overlay">
+          <div className={`countdown-number ${countdown === 0 ? 'go' : ''}`}>
+            {countdown > 0 ? countdown : 'GO!'}
+          </div>
+        </div>
+      )}
+
       {/* Rage flash overlay */}
       <div id="rage-overlay" />
 
