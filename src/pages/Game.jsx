@@ -231,7 +231,7 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
   }, [phase, typed, targetText, streakCount, actions]);
 
   // ── Continue to next round / level complete ───────────────────────────────
-  function handleContinue() {
+  const handleContinue = useCallback(() => {
     setShowResult(false);
     if (round >= ROUNDS_PER_LEVEL) {
       actions.levelComplete(); // unlocks next level in reducer
@@ -239,7 +239,19 @@ export default function Game({ state, actions, onLevelComplete, onQuit }) {
     } else {
       actions.nextRound();
     }
-  }
+  }, [round, actions, onLevelComplete]);
+
+  useEffect(() => {
+    if (!showResult) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleContinue();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showResult, handleContinue]);
 
   // ── Keyboard submit ───────────────────────────────────────────────────────
   function handleInputKey(e) {
